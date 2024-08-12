@@ -1,5 +1,12 @@
-<script setup lang="ts">
+<script lang="ts">
+import { defineComponent } from 'vue'
 import YNAB from './components/YNAB.vue'
+
+const MyYNAB = defineComponent({
+  components: { YNAB },
+})
+
+export default MyYNAB
 </script>
 
 <template>
