@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import YNAB from './components/YNAB.vue';
+import YNAB from './components/YNAB.vue'
 </script>
 
 <template>
-  <YNAB msg="Vite + Vue" />
+  <YNAB />
 </template>
 
-<style scoped>
+<style>
 .logo {
   height: 6em;
   padding: 1.5em;
@@ -18,5 +18,17 @@ import YNAB from './components/YNAB.vue';
 }
 .logo.vue:hover {
   filter: drop-shadow(0 0 2em #42b883aa);
+}
+
+.flex-row {
+  display: flex;
+  flex-direction: row;
+}
+.flex-col {
+  display: flex;
+  flex-direction: column;
+}
+.flex1 {
+  flex: 1;
 }
 </style>
