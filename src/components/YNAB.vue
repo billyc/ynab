@@ -2,19 +2,40 @@
 .ynab
     h1 YNAB
 
-    h3 Accounts
+    h3.caps + Transaction
+    .add-account.box-thing.flex-col.gap25
+      b Amount
+      n-input(v-model:value="payAmount" size="small" round placeholder="0")
+      b Payee
+      n-input(v-model:value="payee" size="small" round placeholder="Payee")
+      b Category
+      .acct-buttons(v-for="acct in allBudgets")
+        n-button(v-if="acct.name != 'To Be Budgeted'" size="tiny" type="info" round :ghost="category!==acct.name" @click="category=acct.name") {{ acct.name }}
+      b Account
+      .acct-buttons(v-for="acct in allAccounts")
+        n-button(size="tiny" type="error" round :ghost="whichAccount!==acct.name" @click="whichAccount=acct.name") {{ acct.name }}
+      n-button(size="small" type="success" round block
+        @click="addTransaction"
+      ) Post
+
+    h3.caps Budgets
+    .accounts(v-for="account in allBudgets")
+      p(@click="addMoney=account.name")
+        b {{ account.name }}
+        span &nbsp;{{ -1 * account.balance }}
+      .adder.flex-row.gap25(v-if="account.name == addMoney")
+        n-input(v-model:value="xferAmount" size="small" placeholder="Add Money")
+        n-button(size="small" type="info" round
+          @click="addMoneyToBudget"
+        ) Assign
+
+    h3.caps Accounts
     .accounts(v-for="account in allAccounts")
       p
         b {{ account.name }}
         span &nbsp;{{ account.balance }}
 
-    h3 Budgets
-    .accounts(v-for="account in allBudgets")
-      p
-        b {{ account.name }}
-        span &nbsp;{{ account.balance }}
-
-    hr
+    h3.caps Admin
 
     .add-account.box-thing(style="background-color: #ffc")
       b: i Add Budget Category
@@ -61,7 +82,13 @@ const MyComponent = defineComponent({
       addType: 'checking',
       addAccount: '',
       addBudget: '',
+      addMoney: '',
       addOpeningBalance: '',
+      category: '',
+      whichAccount: '',
+      xferAmount: '',
+      payAmount: '',
+      payee: '',
     }
   },
   computed: {
@@ -72,7 +99,9 @@ const MyComponent = defineComponent({
 
     allBudgets() {
       const all = Object.values(this.$store.state.accounts) as Account[]
-      return all.filter(acct => acct.type == AccountType.Budget)
+      return all
+        .filter(acct => acct.type == AccountType.Budget)
+        .sort((a, b) => (a.name < b.name ? -1 : 1))
     },
   },
 
@@ -81,6 +110,44 @@ const MyComponent = defineComponent({
   },
 
   methods: {
+    addTransaction() {
+      const amount = parseFloat(this.payAmount || '0')
+      if (!amount) return
+      if (!this.whichAccount) return
+
+      let transaction: Transaction = {
+        date: Temporal.Now.plainDateISO().toString(),
+        amount,
+        payee: this.payee,
+        fromAccount: this.whichAccount,
+        toAccount: this.category,
+      }
+      this.$store.commit('postTransaction', transaction)
+      this.payee = ''
+      this.payAmount = ''
+      this.category = ''
+    },
+
+    addMoneyToBudget() {
+      const amount = parseFloat(this.xferAmount || '0')
+      if (!amount) {
+        this.addMoney = ''
+        return
+      }
+
+      const destinationAccount = this.$store.state.accounts[this.addMoney]
+      let transaction: Transaction = {
+        date: Temporal.Now.plainDateISO().toString(),
+        amount,
+        payee: '',
+        fromAccount: destinationAccount.name,
+        toAccount: 'To Be Budgeted',
+      }
+      this.$store.commit('postTransaction', transaction)
+      this.addMoney = ''
+      this.xferAmount = ''
+    },
+
     createAccount() {
       const balance = parseFloat(this.addOpeningBalance || '0')
       const account: Account = {
@@ -96,8 +163,8 @@ const MyComponent = defineComponent({
           date: Temporal.Now.plainDateISO().toString(),
           amount: balance,
           payee: 'Opening Balance',
-          fromAccount: 'Income',
-          toAccount: 'To Be Budgeted',
+          fromAccount: 'To Be Budgeted',
+          toAccount: 'Income',
         }
         this.$store.commit('postTransaction', transaction)
       }
@@ -118,6 +185,11 @@ export default MyComponent
 </script>
 
 <style scoped>
+h3 {
+  padding: 0 0.25rem;
+  background-color: #fea5ba;
+}
+
 p {
   margin: 0.5rem 0 0 0;
 }

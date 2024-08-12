@@ -3,24 +3,40 @@ import { createStore } from 'vuex'
 
 import { Account, AccountType, Transaction } from './db'
 
-let accounts = localStorage.getItem('accounts') || {
-  Income: { name: 'Income', balance: 0, type: AccountType.Income },
-  'To Be Budgeted': { name: 'To Be Budgeted', balance: 0, type: AccountType.Budget },
+let stored = localStorage.getItem('everything') as any
+// let stored = null
+
+if (stored) {
+  stored = JSON.parse(stored)
+} else {
+  stored = {
+    id: 0,
+    transactions: [],
+    accounts: {
+      Income: { name: 'Income', balance: 0, type: AccountType.Income },
+      'To Be Budgeted': { name: 'To Be Budgeted', balance: 0, type: AccountType.Budget },
+    },
+  }
 }
 
-let transactions = localStorage.getItem('transactions') || []
+const saveEverything = (state: any) => {
+  const everything = JSON.stringify(state, null, 2)
+  console.log(everything)
+  localStorage.setItem('everything', everything)
+}
 
 const store = createStore({
   state() {
     return {
-      accounts,
-      transactions,
-      id: 0,
+      accounts: stored.accounts,
+      transactions: stored.transactions,
+      id: stored.id,
     }
   },
   mutations: {
     addAccount(state: State, account: Account) {
       state.accounts[account.name] = account
+      saveEverything(state)
     },
     postTransaction(state: State, transaction: Transaction) {
       state.id += 1
@@ -32,6 +48,7 @@ const store = createStore({
       const toAcct = state.accounts[transaction.toAccount] as Account
       toAcct.balance += transaction.amount
 
+      saveEverything(state)
       console.log(JSON.stringify(state, null, 2))
     },
   },

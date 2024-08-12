@@ -31,4 +31,13 @@ import YNAB from './components/YNAB.vue'
 .flex1 {
   flex: 1;
 }
+.gap25 {
+  gap: 0.25rem;
+}
+.gap5 {
+  gap: 0.5rem;
+}
+.caps {
+  text-transform: uppercase;
+}
 </style>
