@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@js-temporal/polyfill": "^0.4.4",
     "vue": "^3.4.35",
     "vuex": "^4.1.0"
   },
