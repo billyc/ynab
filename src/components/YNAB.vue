@@ -10,11 +10,15 @@
       n-input(v-model:value="payee" size="small" round placeholder="Payee")
       b Category
       .acct-buttons
-        .category-button(v-for="acct in allBudgets.filter(a => a.name !='@Available')")
-          n-button(size="tiny" type="info" round :ghost="category!==acct.name" @click="category=acct.name") {{ acct.name }}
+        .category-button(v-for="acct in allCategories")
+          n-button(size="tiny" :type="acct.name=='@Deposit' ? 'warning' : 'info'" round :ghost="category!==acct.name"
+            @click="category=acct.name"
+          ) {{ acct.name }}
       b Account
       .acct-buttons(v-for="acct in allAccounts")
-        n-button(size="tiny" type="error" round :ghost="whichAccount!==acct.name" @click="whichAccount=acct.name") {{ acct.name }}
+        n-button(size="tiny" type="error" round :ghost="whichAccount!==acct.name"
+          @click="whichAccount=acct.name"
+        ) {{ acct.name }}
       n-button(size="small" type="success" round block
         @click="addTransaction"
       ) Post
@@ -109,6 +113,19 @@ const MyComponent = defineComponent({
         .sort((a, b) => (a.name < b.name ? -1 : 1))
     },
 
+    allCategories() {
+      const categories = this.allBudgets
+        .filter(acct => acct.type == AccountType.Budget)
+        .filter(acct => acct.name !== '@Available')
+
+      categories.push({
+        name: '@Deposit',
+        type: AccountType.Income,
+        balance: 0,
+      })
+      return categories
+    },
+
     clearAllData() {
       this.$store.commit('clearAllData')
     },
@@ -130,6 +147,12 @@ const MyComponent = defineComponent({
         payee: this.payee,
         fromAccount: this.whichAccount,
         toAccount: this.category,
+      }
+
+      // Deposits are special
+      if (this.category == '@Deposit') {
+        transaction.fromAccount = '@Available'
+        transaction.toAccount = this.whichAccount
       }
 
       this.$store.commit('postTransaction', transaction)
@@ -222,7 +245,7 @@ p {
 
 .box-thing {
   margin-top: 1rem;
-  background-color: #f1feeb;
+  background-color: #f0f0f0;
   padding: 0.25rem 0.25rem;
   border-radius: 16px;
   border: 1px solid #ccc;
