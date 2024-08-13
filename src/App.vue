@@ -1,3 +1,7 @@
+<template>
+  <YNAB />
+</template>
+
 <script lang="ts">
 import { defineComponent } from 'vue'
 import YNAB from './components/YNAB.vue'
@@ -8,10 +12,6 @@ const MyYNAB = defineComponent({
 
 export default MyYNAB
 </script>
-
-<template>
-  <YNAB />
-</template>
 
 <style>
 .logo {
@@ -46,5 +46,8 @@ export default MyYNAB
 }
 .caps {
   text-transform: uppercase;
+}
+.clickable {
+  cursor: pointer;
 }
 </style>

@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "rm -rf dist && vue-tsc -b && vite build && cd dist && git init && git remote add origin git@github.com:billyc/ynab.git && git add . && git commit -m build && git push --force origin master:gh-pages && cd .."
   },
   "dependencies": {
     "@js-temporal/polyfill": "^0.4.4",

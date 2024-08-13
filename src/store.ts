@@ -3,8 +3,8 @@ import { createStore } from 'vuex'
 
 import { Account, AccountType, Transaction } from './db'
 
-let stored = localStorage.getItem('everything') as any
 // let stored = null
+let stored = localStorage.getItem('everything') as any
 
 if (stored) {
   stored = JSON.parse(stored)
@@ -14,7 +14,7 @@ if (stored) {
     transactions: [],
     accounts: {
       Income: { name: 'Income', balance: 0, type: AccountType.Income },
-      'To Be Budgeted': { name: 'To Be Budgeted', balance: 0, type: AccountType.Budget },
+      '@Available': { name: '@Available', balance: 0, type: AccountType.Budget },
     },
   }
 }

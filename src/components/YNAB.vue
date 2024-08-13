@@ -1,6 +1,6 @@
 <template lang="pug">
 .ynab
-    h1 YNAB
+    //- h1 YNAB
 
     h3.caps + Transaction
     .add-account.box-thing.flex-col.gap25
@@ -9,8 +9,9 @@
       b Payee
       n-input(v-model:value="payee" size="small" round placeholder="Payee")
       b Category
-      .acct-buttons(v-for="acct in allBudgets")
-        n-button(v-if="acct.name != 'To Be Budgeted'" size="tiny" type="info" round :ghost="category!==acct.name" @click="category=acct.name") {{ acct.name }}
+      .acct-buttons
+        .category-button(v-for="acct in allBudgets.filter(a => a.name !='@Available')")
+          n-button(size="tiny" type="info" round :ghost="category!==acct.name" @click="category=acct.name") {{ acct.name }}
       b Account
       .acct-buttons(v-for="acct in allAccounts")
         n-button(size="tiny" type="error" round :ghost="whichAccount!==acct.name" @click="whichAccount=acct.name") {{ acct.name }}
@@ -19,10 +20,10 @@
       ) Post
 
     h3.caps Budgets
-    .accounts(v-for="account in allBudgets")
-      p(@click="addMoney=account.name")
-        b {{ account.name }}
-        span &nbsp;{{ -1 * account.balance }}
+    .accounts.clickable(v-for="account in allBudgets")
+      .flex-row(@click="addMoney=account.name")
+        .value-column {{ -1 * account.balance }}
+        b &nbsp;{{ account.name }}
       .adder.flex-row.gap25(v-if="account.name == addMoney")
         n-input(v-model:value="xferAmount" size="small" placeholder="Add Money")
         n-button(size="small" type="info" round
@@ -31,9 +32,9 @@
 
     h3.caps Accounts
     .accounts(v-for="account in allAccounts")
-      p
-        b {{ account.name }}
-        span &nbsp;{{ account.balance }}
+      .flex-row
+        .value-column {{ account.balance }}
+        b &nbsp;{{ account.name }}
 
     h3.caps Admin
 
@@ -106,7 +107,7 @@ const MyComponent = defineComponent({
   },
 
   mounted() {
-    console.log('state', this.$store.state)
+    this.whichAccount = localStorage.getItem('whichAccount') || ''
   },
 
   methods: {
@@ -122,10 +123,13 @@ const MyComponent = defineComponent({
         fromAccount: this.whichAccount,
         toAccount: this.category,
       }
+
       this.$store.commit('postTransaction', transaction)
       this.payee = ''
       this.payAmount = ''
       this.category = ''
+
+      localStorage.setItem('whichAccount', this.whichAccount)
     },
 
     addMoneyToBudget() {
@@ -141,7 +145,7 @@ const MyComponent = defineComponent({
         amount,
         payee: '',
         fromAccount: destinationAccount.name,
-        toAccount: 'To Be Budgeted',
+        toAccount: '@Available',
       }
       this.$store.commit('postTransaction', transaction)
       this.addMoney = ''
@@ -163,7 +167,7 @@ const MyComponent = defineComponent({
           date: Temporal.Now.plainDateISO().toString(),
           amount: balance,
           payee: 'Opening Balance',
-          fromAccount: 'To Be Budgeted',
+          fromAccount: '@Available',
           toAccount: 'Income',
         }
         this.$store.commit('postTransaction', transaction)
@@ -185,6 +189,10 @@ export default MyComponent
 </script>
 
 <style scoped>
+.ynab {
+  width: 100%;
+}
+
 h3 {
   padding: 0 0.25rem;
   background-color: #fea5ba;
@@ -198,11 +206,23 @@ p {
   color: #888;
 }
 
+.acct-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
 .box-thing {
   margin-top: 1rem;
   background-color: #f1feeb;
   padding: 0.25rem 0.25rem;
   border-radius: 16px;
   border: 1px solid #ccc;
+}
+
+.value-column {
+  min-width: 3.5rem;
+  text-align: right;
+  margin-right: 0.25rem;
 }
 </style>
