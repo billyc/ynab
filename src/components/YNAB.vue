@@ -62,6 +62,10 @@
           @click="createAccount"
         ) Create
 
+    br
+    br
+    n-button(type="error" @click="clearAllData") Clear ALL data!
+
 </template>
 
 <script lang="ts">
@@ -103,6 +107,10 @@ const MyComponent = defineComponent({
       return all
         .filter(acct => acct.type == AccountType.Budget)
         .sort((a, b) => (a.name < b.name ? -1 : 1))
+    },
+
+    clearAllData() {
+      this.$store.commit('clearAllData')
     },
   },
 

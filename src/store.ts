@@ -34,10 +34,15 @@ const store = createStore({
     }
   },
   mutations: {
+    clearAllData() {
+      localStorage.clear()
+    },
+
     addAccount(state: State, account: Account) {
       state.accounts[account.name] = account
       saveEverything(state)
     },
+
     postTransaction(state: State, transaction: Transaction) {
       state.id += 1
       state.transactions.push({ ...transaction, id: state.id })
