@@ -3,25 +3,39 @@
     //- h1 YNAB
 
     h3.caps + Transaction
-    .add-account.box-thing.flex-col.gap25
-      b Amount
-      n-input(v-model:value="payAmount" size="small" round placeholder="0")
-      b Payee
-      n-input(v-model:value="payee" size="small" round placeholder="Payee")
-      b Category
+    .add-account.box-thing.flex-col
+      .grid(style="grid-auto-columns: auto 1fr; gap: 0 0.5rem;")
+        b(style="grid-row: 1 / 2") Amount
+        n-input(style="grid-row: 1/2" v-model:value="payAmount" size="small" round placeholder="0")
+        b(style="grid-row: 2/3") Payee
+        n-input(style="grid-row: 2/3" v-model:value="payee" size="small" round placeholder="Payee")
+
+      p: b Category
       .acct-buttons
         .category-button(v-for="acct in allCategories")
-          n-button(size="tiny" :type="acct.name=='@Deposit' ? 'warning' : 'info'" round :ghost="category!==acct.name"
+          n-button(size="tiny" :type="acct.color || 'info'" round :ghost="category!==acct.name"
             @click="category=acct.name"
           ) {{ acct.name }}
-      b Account
-      .acct-buttons(v-for="acct in allAccounts")
-        n-button(size="tiny" type="error" round :ghost="whichAccount!==acct.name"
-          @click="whichAccount=acct.name"
-        ) {{ acct.name }}
-      n-button(size="small" type="success" round block
-        @click="addTransaction"
-      ) Post
+
+      p: b Account
+      .acct-buttons
+        .category-button(v-for="acct in allAccounts")
+          n-button(size="tiny" type="error" round :ghost="whichAccount!==acct.name"
+            @click="whichAccount=acct.name"
+          ) {{ acct.name }}
+
+      .transfer(v-if="category=='@Transfer'")
+        p: b Transfer Destination
+        .acct-buttons
+          .category-button(v-for="acct in allAccounts")
+            n-button(size="tiny" type="info" round :ghost="xferDest!==acct.name"
+              @click="xferDest=acct.name"
+            ) {{ acct.name }}
+
+      p.post
+        n-button(size="small" type="success" round block
+          @click="addTransaction"
+        ) Post
 
     h3.caps Budgets
     .accounts.clickable(v-for="account in allBudgets")
@@ -69,6 +83,7 @@
     br
     br
     n-button(type="error" @click="clearAllData") Clear ALL data!
+    br
 
 </template>
 
@@ -96,6 +111,7 @@ const MyComponent = defineComponent({
       category: '',
       whichAccount: '',
       xferAmount: '',
+      xferDest: '',
       payAmount: '',
       payee: '',
     }
@@ -122,12 +138,17 @@ const MyComponent = defineComponent({
         name: '@Deposit',
         type: AccountType.Income,
         balance: 0,
+        color: 'warning',
       })
-      return categories
-    },
 
-    clearAllData() {
-      this.$store.commit('clearAllData')
+      categories.push({
+        name: '@Transfer',
+        type: AccountType.Income,
+        balance: 0,
+        color: 'success',
+      })
+
+      return categories
     },
   },
 
@@ -153,6 +174,12 @@ const MyComponent = defineComponent({
       if (this.category == '@Deposit') {
         transaction.fromAccount = '@Available'
         transaction.toAccount = this.whichAccount
+      }
+
+      // Transfers are special
+      if (this.category == '@Transfer') {
+        transaction.fromAccount = this.whichAccount
+        transaction.toAccount = this.xferDest
       }
 
       this.$store.commit('postTransaction', transaction)
@@ -199,10 +226,12 @@ const MyComponent = defineComponent({
           amount: balance,
           payee: 'Opening Balance',
           fromAccount: '@Available',
-          toAccount: 'Income',
+          toAccount: 'Opening Balance',
         }
         this.$store.commit('postTransaction', transaction)
       }
+      this.addAccount = ''
+      this.addOpeningBalance = ''
     },
 
     createBudget() {
@@ -212,6 +241,12 @@ const MyComponent = defineComponent({
         balance: 0,
       }
       this.$store.commit('addAccount', account)
+      this.addBudget = ''
+    },
+
+    clearAllData() {
+      console.log('CLEARING ALL DATA')
+      this.$store.commit('clearAllData')
     },
   },
 })
@@ -241,6 +276,7 @@ p {
   display: flex;
   flex-wrap: wrap;
   gap: 2px;
+  margin-top: -0.25rem;
 }
 
 .box-thing {

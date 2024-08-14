@@ -50,4 +50,7 @@ export default MyYNAB
 .clickable {
   cursor: pointer;
 }
+.grid {
+  display: grid;
+}
 </style>

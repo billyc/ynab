@@ -13,7 +13,7 @@ if (stored) {
     id: 0,
     transactions: [],
     accounts: {
-      Income: { name: 'Income', balance: 0, type: AccountType.Income },
+      'Opening Balance': { name: 'Income', balance: 0, type: AccountType.Income },
       '@Available': { name: '@Available', balance: 0, type: AccountType.Budget },
     },
   }
@@ -21,7 +21,6 @@ if (stored) {
 
 const saveEverything = (state: any) => {
   const everything = JSON.stringify(state, null, 2)
-  console.log(everything)
   localStorage.setItem('everything', everything)
 }
 

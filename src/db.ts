@@ -10,6 +10,7 @@ export interface Account {
   balance: number
   type: AccountType
   note?: string
+  color?: string
 }
 
 export interface Transaction {
