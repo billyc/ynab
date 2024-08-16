@@ -24,16 +24,16 @@
             @click="whichAccount=acct.name"
           ) {{ acct.name }}
 
-      .transfer(v-if="category=='@Transfer'")
+      .transfer(v-if="category=='@Credit Card Payment'")
         p: b Transfer Destination
         .acct-buttons
-          .category-button(v-for="acct in allAccounts")
+          .category-button(v-for="acct in allAccounts.filter(a => a.type == 1)")
             n-button(size="tiny" type="info" round :ghost="xferDest!==acct.name"
               @click="xferDest=acct.name"
             ) {{ acct.name }}
 
       p.post
-        n-button(size="small" type="success" round block
+        n-button(size="small" type="success" round block :disabled="!isPostEnabled"
           @click="addTransaction"
         ) Post
 
@@ -95,6 +95,12 @@ import { Temporal } from '@js-temporal/polyfill'
 
 import { Account, AccountType, Transaction } from '../db'
 
+export enum Special {
+  Available = '@Available',
+  CreditCardPayment = '@Credit Card Payment',
+  Debt = 'Debt',
+}
+
 const MyComponent = defineComponent({
   name: 'MyComponent',
   components: { NSpace, NInput, NButton },
@@ -117,6 +123,14 @@ const MyComponent = defineComponent({
     }
   },
   computed: {
+    state() {
+      return this.$store.state
+    },
+
+    isPostEnabled() {
+      return this.payAmount && this.payee && this.category && this.whichAccount
+    },
+
     allAccounts() {
       const all = Object.values(this.$store.state.accounts) as Account[]
       return all.filter(acct => acct.type <= AccountType.CreditCard)
@@ -132,18 +146,21 @@ const MyComponent = defineComponent({
     allCategories() {
       const categories = this.allBudgets
         .filter(acct => acct.type == AccountType.Budget)
-        .filter(acct => acct.name !== '@Available')
+        .filter(acct => acct.name !== Special.Available)
+        .filter(acct => acct.name !== Special.CreditCardPayment)
+
+      if (this.allAccounts.filter(a => a.type == AccountType.CreditCard).length) {
+        categories.push({
+          name: Special.CreditCardPayment,
+          type: AccountType.Budget,
+          balance: 0,
+          color: 'warning',
+        })
+      }
 
       categories.push({
         name: '@Deposit',
-        type: AccountType.Income,
-        balance: 0,
-        color: 'warning',
-      })
-
-      categories.push({
-        name: '@Transfer',
-        type: AccountType.Income,
+        type: AccountType.Budget,
         balance: 0,
         color: 'success',
       })
@@ -170,16 +187,36 @@ const MyComponent = defineComponent({
         toAccount: this.category,
       }
 
+      // Credit card charges are special
+      if (this.state.accounts[this.whichAccount].type == AccountType.CreditCard) {
+        this.$store.commit('postTransaction', {
+          date: Temporal.Now.plainDateISO().toString(),
+          amount,
+          payee: this.payee,
+          fromAccount: Special.CreditCardPayment,
+          toAccount: Special.Debt,
+        })
+      }
+
       // Deposits are special
       if (this.category == '@Deposit') {
-        transaction.fromAccount = '@Available'
+        transaction.fromAccount = Special.Available
         transaction.toAccount = this.whichAccount
       }
 
       // Transfers are special
-      if (this.category == '@Transfer') {
+      if (this.category == Special.CreditCardPayment) {
         transaction.fromAccount = this.whichAccount
-        transaction.toAccount = this.xferDest
+        transaction.toAccount = Special.CreditCardPayment
+
+        // update Debt account
+        this.$store.commit('postTransaction', {
+          date: Temporal.Now.plainDateISO().toString(),
+          amount,
+          payee: this.payee,
+          fromAccount: Special.Debt,
+          toAccount: this.xferDest,
+        })
       }
 
       this.$store.commit('postTransaction', transaction)
@@ -203,7 +240,7 @@ const MyComponent = defineComponent({
         amount,
         payee: '',
         fromAccount: destinationAccount.name,
-        toAccount: '@Available',
+        toAccount: Special.Available,
       }
       this.$store.commit('postTransaction', transaction)
       this.addMoney = ''
@@ -211,25 +248,58 @@ const MyComponent = defineComponent({
     },
 
     createAccount() {
-      const balance = parseFloat(this.addOpeningBalance || '0')
+      // create account itself
       const account: Account = {
         name: this.addAccount,
         type: this.addType == 'checking' ? AccountType.Checking : AccountType.CreditCard,
-        balance,
+        balance: 0,
       }
       this.$store.commit('addAccount', account)
 
+      // add credit-card-payment categories if we added a credit card
+      if (
+        account.type == AccountType.CreditCard &&
+        !(Special.CreditCardPayment in this.state.accounts)
+      ) {
+        this.$store.commit('addAccount', {
+          name: Special.CreditCardPayment,
+          type: AccountType.Budget,
+          balance: 0,
+        })
+        this.$store.commit('addAccount', {
+          name: Special.Debt,
+          type: AccountType.Debt,
+          balance: 0,
+        })
+      }
+
+      // opening balance transactions
+      const balance = parseFloat(this.addOpeningBalance || '0')
+      if (balance) {
+      }
+
       // Special handling of accounts with an opening balance
-      if (balance > 0 && account.type == AccountType.Checking) {
-        let transaction: Transaction = {
+      if (account.type == AccountType.Checking) {
+        this.$store.commit('postTransaction', {
           date: Temporal.Now.plainDateISO().toString(),
           amount: balance,
           payee: 'Opening Balance',
-          fromAccount: '@Available',
-          toAccount: 'Opening Balance',
-        }
-        this.$store.commit('postTransaction', transaction)
+          fromAccount: Special.Available,
+          toAccount: this.addAccount,
+        })
       }
+
+      if (account.type == AccountType.CreditCard) {
+        this.$store.commit('postTransaction', {
+          date: Temporal.Now.plainDateISO().toString(),
+          amount: balance,
+          payee: 'Opening Balance',
+          fromAccount: this.addAccount,
+          toAccount: Special.Debt,
+        })
+      }
+
+      // clean up
       this.addAccount = ''
       this.addOpeningBalance = ''
     },

@@ -13,7 +13,6 @@ if (stored) {
     id: 0,
     transactions: [],
     accounts: {
-      'Opening Balance': { name: 'Income', balance: 0, type: AccountType.Income },
       '@Available': { name: '@Available', balance: 0, type: AccountType.Budget },
     },
   }

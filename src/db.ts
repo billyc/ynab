@@ -1,7 +1,7 @@
 export enum AccountType {
   Checking,
   CreditCard,
-  Income,
+  Debt,
   Budget,
 }
 
