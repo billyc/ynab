@@ -182,9 +182,9 @@ const MyComponent = defineComponent({
       let transaction: Transaction = {
         date: Temporal.Now.plainDateISO().toString(),
         amount,
-        payee: this.payee,
-        fromAccount: this.whichAccount,
-        toAccount: this.category,
+        payee: this.payee.trim(),
+        fromAccount: this.whichAccount.trim(),
+        toAccount: this.category.trim(),
       }
 
       // Credit card charges are special
@@ -192,7 +192,7 @@ const MyComponent = defineComponent({
         this.$store.commit('postTransaction', {
           date: Temporal.Now.plainDateISO().toString(),
           amount,
-          payee: this.payee,
+          payee: this.payee.trim(),
           fromAccount: Special.CreditCardPayment,
           toAccount: Special.Debt,
         })
@@ -201,21 +201,21 @@ const MyComponent = defineComponent({
       // Deposits are special
       if (this.category == '@Deposit') {
         transaction.fromAccount = Special.Available
-        transaction.toAccount = this.whichAccount
+        transaction.toAccount = this.whichAccount.trim()
       }
 
       // Transfers are special
       if (this.category == Special.CreditCardPayment) {
-        transaction.fromAccount = this.whichAccount
+        transaction.fromAccount = this.whichAccount.trim()
         transaction.toAccount = Special.CreditCardPayment
 
         // update Debt account
         this.$store.commit('postTransaction', {
           date: Temporal.Now.plainDateISO().toString(),
           amount,
-          payee: this.payee,
+          payee: this.payee.trim(),
           fromAccount: Special.Debt,
-          toAccount: this.xferDest,
+          toAccount: this.xferDest.trim(),
         })
       }
 
@@ -250,7 +250,7 @@ const MyComponent = defineComponent({
     createAccount() {
       // create account itself
       const account: Account = {
-        name: this.addAccount,
+        name: this.addAccount.trim(),
         type: this.addType == 'checking' ? AccountType.Checking : AccountType.CreditCard,
         balance: 0,
       }
@@ -285,7 +285,7 @@ const MyComponent = defineComponent({
           amount: balance,
           payee: 'Opening Balance',
           fromAccount: Special.Available,
-          toAccount: this.addAccount,
+          toAccount: this.addAccount.trim(),
         })
       }
 
@@ -294,7 +294,7 @@ const MyComponent = defineComponent({
           date: Temporal.Now.plainDateISO().toString(),
           amount: balance,
           payee: 'Opening Balance',
-          fromAccount: this.addAccount,
+          fromAccount: this.addAccount.trim(),
           toAccount: Special.Debt,
         })
       }
@@ -306,7 +306,7 @@ const MyComponent = defineComponent({
 
     createBudget() {
       const account: Account = {
-        name: this.addBudget,
+        name: this.addBudget.trim(),
         type: AccountType.Budget,
         balance: 0,
       }
