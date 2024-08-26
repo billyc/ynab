@@ -2,10 +2,10 @@
 .ynab
     //- h1 YNAB
 
-    h3.caps + Transaction
     .add-account.box-thing.flex-col
+      .center: b.caps(style="color: blue") Transaction+
       .grid(style="grid-auto-columns: auto 1fr; gap: 0 0.5rem;")
-        b(style="grid-row: 1 / 2") Amount
+        b(style="grid-row: 1/2") Amount
         n-input(style="grid-row: 1/2" v-model:value="payAmount" size="small" round placeholder="0")
         b(style="grid-row: 2/3") Payee
         n-input(style="grid-row: 2/3" v-model:value="payee" size="small" round placeholder="Payee")
@@ -24,7 +24,7 @@
             @click="whichAccount=acct.name"
           ) {{ acct.name }}
 
-      .transfer(v-if="category=='@Credit Card Payment'")
+      .transfer(v-if="category=='CC Payment'")
         p: b Transfer Destination
         .acct-buttons
           .category-button(v-for="acct in allAccounts.filter(a => a.type == 1)")
@@ -37,22 +37,37 @@
           @click="addTransaction"
         ) Post
 
-    h3.caps Budgets
-    .accounts.clickable(v-for="account in allBudgets")
-      .flex-row(@click="addMoney=account.name")
-        .value-column {{ -1 * account.balance / 100.0 }}
-        b &nbsp;{{ account.name }}
-      .adder.flex-row.gap25(v-if="account.name == addMoney")
-        n-input(v-model:value="xferAmount" size="small" placeholder="Add Money")
-        n-button(size="small" type="info" round
-          @click="addMoneyToBudget"
-        ) Assign
+    .box-thing(style="background-color: #6fb;")
+      .center: b.caps Budgets
+      .accounts.clickable(v-for="account in allBudgets")
+        .flex-row(@click="addMoney=account.name")
+          .value-column {{ -1 * account.balance / 100.0 }}
+          b &nbsp;{{ account.name }}
+        .adder.flex-row.gap25(v-if="account.name == addMoney")
+          n-input(v-model:value="xferAmount" size="small" placeholder="Add Money")
+          n-button(size="small" type="info" round
+            @click="addMoneyToBudget"
+          ) Assign
+          n-button(size="small" type="success" round
+            @click="viewTransactions(account.name)"
+          ) View All
 
-    h3.caps Accounts
-    .accounts(v-for="account in allAccounts")
-      .flex-row
-        .value-column {{ account.balance / 100.0 }}
-        b &nbsp;{{ account.name }}
+    .box-thing(v-if="filteredAccount")
+      .center: b.caps Details: {{  filteredAccount }}
+      .flex-col
+        .detail-row.flex-row(v-for="row,i in filteredTransactions" style="gap: 0.5rem")
+          .xitem(style="color: blue") {{ row.date }}
+          b.xitem {{ (parseInt(row.amount)/100).toFixed(2) }}
+          .xitem.flex1 {{ row.payee }}
+          .xitem {{ row.fromAccount }}
+          .xitem -> {{ row.toAccount }}
+
+    .box-thing(style="background-color: #fb4;")
+      .center: b.caps Accounts
+      .accounts(v-for="account in allAccounts")
+        .flex-row
+          .value-column {{ account.balance / 100.0 }}
+          b &nbsp;{{ account.name }}
 
     h3.caps Admin
 
@@ -97,7 +112,7 @@ import { Account, AccountType, Transaction } from '../db'
 
 export enum Special {
   Available = '@Available',
-  CreditCardPayment = '@Credit Card Payment',
+  CreditCardPayment = 'CC Payment',
   Debt = 'Debt',
 }
 
@@ -115,6 +130,8 @@ const MyComponent = defineComponent({
       addMoney: '',
       addOpeningBalance: '',
       category: '',
+      filteredAccount: '',
+      filteredTransactions: [] as Transaction[],
       whichAccount: '',
       xferAmount: '',
       xferDest: '',
@@ -314,6 +331,24 @@ const MyComponent = defineComponent({
       this.addBudget = ''
     },
 
+    viewTransactions(accountName: string) {
+      const transactions = this.state.transactions
+        .filter((row: Transaction) => {
+          return row.fromAccount == accountName || row.toAccount == accountName
+        })
+        .filter((row: Transaction) => !!row.payee)
+        .sort((a: Transaction, b: Transaction) => (a.date < b.date ? 1 : -1))
+
+      console.log(JSON.stringify(transactions, null, 2))
+      if (transactions.length) {
+        this.filteredAccount = accountName
+        this.filteredTransactions = transactions
+      } else {
+        this.filteredAccount = ''
+        this.filteredTransactions = []
+      }
+    },
+
     clearAllData() {
       console.log('CLEARING ALL DATA')
       this.$store.commit('clearAllData')
@@ -358,8 +393,12 @@ p {
 }
 
 .value-column {
-  min-width: 3.5rem;
+  min-width: 4.5rem;
   text-align: right;
   margin-right: 0.25rem;
+}
+
+.center {
+  text-align: center;
 }
 </style>
