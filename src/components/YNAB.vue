@@ -40,7 +40,7 @@
     h3.caps Budgets
     .accounts.clickable(v-for="account in allBudgets")
       .flex-row(@click="addMoney=account.name")
-        .value-column {{ -1 * account.balance }}
+        .value-column {{ -1 * account.balance / 100.0 }}
         b &nbsp;{{ account.name }}
       .adder.flex-row.gap25(v-if="account.name == addMoney")
         n-input(v-model:value="xferAmount" size="small" placeholder="Add Money")
@@ -51,7 +51,7 @@
     h3.caps Accounts
     .accounts(v-for="account in allAccounts")
       .flex-row
-        .value-column {{ account.balance }}
+        .value-column {{ account.balance / 100.0 }}
         b &nbsp;{{ account.name }}
 
     h3.caps Admin
@@ -175,7 +175,7 @@ const MyComponent = defineComponent({
 
   methods: {
     addTransaction() {
-      const amount = parseFloat(this.payAmount || '0')
+      const amount = Math.round(100.0 * parseFloat(this.payAmount || '0'))
       if (!amount) return
       if (!this.whichAccount) return
 
@@ -228,7 +228,7 @@ const MyComponent = defineComponent({
     },
 
     addMoneyToBudget() {
-      const amount = parseFloat(this.xferAmount || '0')
+      const amount = Math.round(100 * parseFloat(this.xferAmount || '0'))
       if (!amount) {
         this.addMoney = ''
         return
@@ -274,7 +274,7 @@ const MyComponent = defineComponent({
       }
 
       // opening balance transactions
-      const balance = parseFloat(this.addOpeningBalance || '0')
+      const balance = Math.round(100 * parseFloat(this.addOpeningBalance || '0'))
       if (balance) {
       }
 
