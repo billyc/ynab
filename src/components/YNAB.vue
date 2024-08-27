@@ -52,22 +52,25 @@
             @click="viewTransactions(account.name)"
           ) View All
 
-    .box-thing(v-if="filteredAccount")
+    //- DETAILS ------------------
+    .box-thing(v-if="filteredAccount" style="font-size: 0.9rem")
       .center: b.caps Details: {{  filteredAccount }}
       .flex-col
         .detail-row.flex-row(v-for="row,i in filteredTransactions" style="gap: 0.5rem")
           .xitem(style="color: blue") {{ row.date }}
-          b.xitem {{ (parseInt(row.amount)/100).toFixed(2) }}
-          .xitem.flex1 {{ row.payee }}
-          .xitem {{ row.fromAccount }}
-          .xitem -> {{ row.toAccount }}
+          b.xitem(style="width: 3.75rem; text-align: right") {{ (parseInt(row.amount)/100).toFixed(2) }}
+          b.xitem.flex1(style="min-width: content") {{ row.payee }}
+          .xitem {{ row.fromAccount }}->{{ row.toAccount }}
 
-    .box-thing(style="background-color: #fb4;")
+    .box-thing.flex-col.gap25(style="background-color: #fb4;")
       .center: b.caps Accounts
       .accounts(v-for="account in allAccounts")
         .flex-row
           .value-column {{ account.balance / 100.0 }}
-          b &nbsp;{{ account.name }}
+          .flex1: b &nbsp;{{ account.name }}
+          n-button(size="small" type="success" round
+            @click="viewTransactions(account.name)"
+          ) View All
 
     h3.caps Admin
 
@@ -157,7 +160,7 @@ const MyComponent = defineComponent({
       const all = Object.values(this.$store.state.accounts) as Account[]
       return all
         .filter(acct => acct.type == AccountType.Budget)
-        .sort((a, b) => (a.name < b.name ? -1 : 1))
+        .sort((a, b) => (a.name > b.name ? 1 : -1))
     },
 
     allCategories() {
@@ -337,7 +340,7 @@ const MyComponent = defineComponent({
           return row.fromAccount == accountName || row.toAccount == accountName
         })
         .filter((row: Transaction) => !!row.payee)
-        .sort((a: Transaction, b: Transaction) => (a.date < b.date ? 1 : -1))
+        .sort((a: Transaction, b: Transaction) => (a.date <= b.date ? 1 : -1))
 
       console.log(JSON.stringify(transactions, null, 2))
       if (transactions.length) {
@@ -400,5 +403,9 @@ p {
 
 .center {
   text-align: center;
+}
+
+.detail-row:nth-child(even) {
+  background-color: white;
 }
 </style>
